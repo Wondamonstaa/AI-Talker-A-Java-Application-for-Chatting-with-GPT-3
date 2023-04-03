@@ -1,0 +1,42 @@
+import java.io.IOException;
+import java.util.List;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openai.api.API;
+import com.openai.api.models.CompletionRequest;
+import com.openai.api.models.CompletionResponse;
+
+public class ChatGPT {
+    private API api;
+    private String apiKey;
+    private String model;
+
+    public ChatGPT(String apiKey, String model) {
+        this.apiKey = apiKey;
+        this.model = model;
+        this.api = new API(apiKey);
+    }
+
+    public String generateText(String prompt) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        CompletionRequest.Builder builder = CompletionRequest.builder()
+                .prompt(prompt)
+                .model(model)
+                .maxTokens(128)
+                .temperature(0.5)
+                .n(1)
+                .stop(List.of("\n"));
+
+        CompletionRequest completionRequest = builder.build();
+
+        CompletionResponse completionResponse = api.completions(completionRequest);
+
+        JsonNode choices = objectMapper.readTree(completionResponse.getChoices().toString());
+
+        String text = choices.get(0).get("text").asText();
+
+        return text;
+    }
+}
